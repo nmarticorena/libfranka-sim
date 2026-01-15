@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2",  "numpy==1.26.4"]
+requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2",  "numpy>=1.26.4"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,9 +8,9 @@ description = "A high-fidelity simulation server that implements the Franka robo
 requires-python = ">=3.8"
 dynamic = ["version"]  # Use dynamic versioning from git tags
 dependencies = [
-    "numpy==1.26.4",
-    "genesis-world==0.2.1",
-    "numba==0.60.0",
+    "numpy>=1.26.4",
+    "genesis-world>=0.2.1",
+    "numba>=0.60.0",
     "torch>=2.0.0",
     "pytest"
 ]

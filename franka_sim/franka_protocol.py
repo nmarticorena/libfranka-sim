@@ -12,16 +12,31 @@ class Command(enum.IntEnum):
     kConnect = 0
     kMove = 1
     kStopMove = 2
-    kSetCollisionBehavior = 3
-    kSetJointImpedance = 4
-    kSetCartesianImpedance = 5
-    kSetGuidingMode = 6
-    kSetEEToK = 7
-    kSetNEToEE = 8
-    kSetLoad = 9
-    kAutomaticErrorRecovery = 10
-    kLoadModelLibrary = 11
-    kGetRobotModel = 12
+    kGetCartesianLimit = 3
+    kSetCollisionBehavior = 4
+    kSetJointImpedance = 5
+    kSetCartesianImpedance = 6
+    kSetGuidingMode = 7
+    kSetEEToK = 8
+    kSetNEToEE = 9
+    kSetLoad = 10
+    kSetFilters = 11
+    kAutomaticErrorRecovery = 12
+    kLoadModelLibrary = 13
+    # kConnect = 0
+    # kMove = 1
+    # kStopMove = 2
+    # kSetCollisionBehavior = 3
+    # kSetJointImpedance = 4
+    # kSetCartesianImpedance = 5
+    # kSetGuidingMode = 6
+    # kSetEEToK = 7
+    # kSetNEToEE = 8
+    # kSetLoad = 9
+    # kAutomaticErrorRecovery = 10
+    # kLoadModelLibrary = 11
+    # kGetRobotModel = 12
+    # kLoadModel = 13
 
 
 class ConnectStatus(enum.IntEnum):

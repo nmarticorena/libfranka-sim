@@ -11,6 +11,7 @@ import time
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Tuple
 
+
 from franka_sim.franka_genesis_sim import ControlMode, FrankaGenesisSim
 from franka_sim.franka_protocol import (
     COMMAND_PORT,
@@ -30,9 +31,10 @@ from franka_sim.franka_protocol import (
     convert_to_libfranka_motion_mode,
 )
 from franka_sim.robot_state import RobotState
+from franka_sim.robot_model import MODEL_LIBRARY_SIZE, MODEL_LIBRARY_DATA
 
 # Configure detailed logging for debugging
-logging.basicConfig(level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -217,7 +219,7 @@ class FrankaSimServer:
                 for fd, event in events:
                     if event & select.POLLIN:
                         expected_size = (
-                            8 + (7 * 8 + 7 * 8 + 16 * 8 + 6 * 8 + 2 * 8 + 1 + 1) + (7 * 8 + 1)
+                            8 + (7 * 8 + 7 * 8 + 16 * 8 + 6 * 8 + 2 * 8 + 1 + 1) + (7 * 8 )
                         )
                         command = None
 
@@ -262,7 +264,7 @@ class FrankaSimServer:
                         tau_J_d = struct.unpack("<7d", data[offset : offset + 56])
                         offset += 56
 
-                        torque_command_finished = bool(data[offset])
+                        # torque_command_finished = bool(data[offset])
 
                         command = {
                             "message_id": message_id,
@@ -274,7 +276,7 @@ class FrankaSimServer:
                             "valid_elbow": valid_elbow,
                             "motion_generation_finished": motion_generation_finished,
                             "tau_J_d": tau_J_d,
-                            "torque_command_finished": torque_command_finished,
+                            # "torque_command_finished": torque_command_finished,
                         }
 
                     except BlockingIOError:
@@ -643,6 +645,32 @@ class FrankaSimServer:
             response_data = struct.pack("<B3x", 1)  # Status 1 = Error
             client_socket.sendall(header_bytes + response_data)
 
+    def handle_load_model_library_command(self, client_socket, header: MessageHeader, payload: bytes):
+        logger.info("[FCI Sim Server] Handling LoadModelLibrary command")
+
+        # 1) Parse request if present (layout depends on protocol!)
+        # If you don't know the layout yet, you can just log payload length for now.
+        if payload:
+            logger.debug(f"LoadModelLibrary payload len={len(payload)} bytes")
+            # Example parse (adjust!):
+            # arch, system = struct.unpack_from("<II", payload, 0)
+
+        # 2) Prepare model bytes
+        model_library_data = bytes(MODEL_LIBRARY_DATA)
+        model_size = len(model_library_data)
+
+        # 3) Response sizes + header
+        total_size = 12 + 1 + model_size
+        response_header = MessageHeader(Command.kLoadModelLibrary, header.command_id, total_size)
+
+        # 4) Send header + 1-byte status + model bytes
+        client_socket.sendall(response_header.to_bytes())
+        client_socket.sendall(struct.pack("<B", 0))  # success (1 byte)
+        client_socket.sendall(model_library_data)
+
+        logger.info(f"[FCI Sim Server] Sent LoadModelLibrary response with {model_size} bytes model")
+
+
     def handle_tcp_messages(self, client_socket):
         """Handle TCP messages in a separate thread"""
         logger.info("TCP message handler thread started")
@@ -686,7 +714,23 @@ class FrankaSimServer:
                 elif header.command == Command.kSetCartesianImpedance:
                     logger.info("Handling SetCartesianImpedance command")
                     self.handle_set_cartesian_impedance_command(client_socket, header, payload)
+                elif header.command == Command.kLoadModelLibrary:
+                    print("Handling LoadModelLibrary command")
+                    logger.info("Handling LoadModelLibrary command")
+                    self.handle_load_model_library_command(client_socket, header, payload)
+                #     logger.info("Handling LoadModel command - Not implemented")
+                #     # For now, just send a success response
+                #     total_size = 12 + 4  # Header (12) + status (1) + padding (3)
+                #     response_header = MessageHeader(
+                #         Command.kLoadModel, header.command_id, total_size
+                #     )
+                #     header_bytes = response_header.to_bytes()
+                #     response_data = struct.pack("<B3x", 0)  # 1 byte status + 3 bytes padding
+                #     client_socket.sendall(header_bytes + response_data)
+                #     logger.info("Sent LoadModel success response")
+                #
                 else:
+                    print(f"Unhandled command received, {Command(header.command).name}")
                     logger.warning(
                         f"Unhandled command in TCP thread: {Command(header.command).name}"
                     )
